@@ -27,6 +27,7 @@
 #include <QOpenGLFunctions>
 #include <QtQuick/QSGMaterial>
 #include <QtQuick/QSGMaterialShader>
+#include <QtQuick/QSGMaterial>
 
 // all in QSGRenderThread
 namespace QtAV {

@@ -23,6 +23,7 @@ isEqual(QT_MAJOR_VERSION, 5) {
   SUBDIRS += examples
   examples.depends += libqtav
 }
+win32:CONFIG(debug, debug | release): QMAKE_CXXFLAGS += -Zi
 !cross_compile:!no-tests {
   SUBDIRS += tests
   tests.depends += libqtav libqtavwidgets
