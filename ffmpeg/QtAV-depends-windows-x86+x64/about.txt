@@ -1,0 +1,5 @@
+Development and runtime files required by QtAV:
+OpenAL 1.17.2 runtime (optional, dynamically loaded by QtAV>=1.10)
+ffmpeg 3.1 with encoders, d3d11va+hevc+vp9
+ass.dll: VS2013
+libass.dll: MinGW GCC
