@@ -30,49 +30,59 @@ if(EXISTS ${QTAV_SOURCE_DIR}/contrib/capi/capi.h)
     list(APPEND EXTRA_DEFS -DQTAV_HAVE_CAPI=1)
 endif()
 
-pkg_check_modules (AVFORMAT libavformat REQUIRED)
+if (ANDROID)
+  set(ENV{PKG_CONFIG_PATH} "${CMAKE_SOURCE_DIR}/ffmpeg/ffmpeg-4.2-android-clang/lib/${ANDROID_ABI}/pkgconfig")
+elseif(WIN32)
+  if (VC_ARCH STREQUAL x86 OR ${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+    set(ENV{PKG_CONFIG_PATH} "${CMAKE_SOURCE_DIR}/ffmpeg/QtAV-depends-windows-x86+x64/lib/pkgconfig")
+  else()
+    set(ENV{PKG_CONFIG_PATH} "${CMAKE_SOURCE_DIR}/ffmpeg/QtAV-depends-windows-x86+x64/lib/x64/pkgconfig")
+  endif()
+endif()
+
+pkg_check_modules (AVFORMAT libavformat REQUIRED IMPORTED_TARGET)
 if(${AVFORMAT_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVFORMAT)
     message("Found AVFORMAT: ${AVFORMAT_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (AVCODEC libavcodec REQUIRED)
+pkg_check_modules (AVCODEC libavcodec REQUIRED IMPORTED_TARGET)
 if(${AVCODEC_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVCODEC)
     message("Found AVCODEC: ${AVCODEC_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (SWSCALE libswscale REQUIRED)
+pkg_check_modules (SWSCALE libswscale REQUIRED IMPORTED_TARGET)
 if(${SWSCALE_FOUND})
     list(APPEND PKG_CONFIG_MODULES SWSCALE)
     message("Found SWSCALE: ${SWSCALE_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (AVUTIL libavutil REQUIRED)
+pkg_check_modules (AVUTIL libavutil REQUIRED IMPORTED_TARGET)
 if(${AVUTIL_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVUTIL)
     message("Found AVUTIL: ${AVUTIL_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (AVFILTER libavfilter)
+pkg_check_modules (AVFILTER libavfilter IMPORTED_TARGET)
 if(${AVFILTER_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVFILTER)
     message("Found AVFILTER: ${AVFILTER_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (AVDEVICE libavdevice)
+pkg_check_modules (AVDEVICE libavdevice IMPORTED_TARGET)
 if(${AVDEVICE_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVDEVICE)
     message("Found AVDEVICE: ${AVDEVICE_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (AVRESAMPLE libavresample)
+pkg_check_modules (AVRESAMPLE libavresample IMPORTED_TARGET)
 if(${AVRESAMPLE_FOUND})
     list(APPEND PKG_CONFIG_MODULES AVRESAMPLE)
     message("Found AVRESAMPLE: ${AVRESAMPLE_LINK_LIBRARIES}")
 endif()
 
-pkg_check_modules (SWRESAMPLE libswresample)
+pkg_check_modules (SWRESAMPLE libswresample IMPORTED_TARGET)
 if(${SWRESAMPLE_FOUND})
     list(APPEND PKG_CONFIG_MODULES SWRESAMPLE)
     message("Found SWRESAMPLE: ${SWRESAMPLE_LINK_LIBRARIES}")
@@ -211,7 +221,7 @@ set(OPENGLES 0)   #glesv2 only
 set(HAVE_OPENGL 1) # qt with opengl enabled. 1 of DYNAMIC_GL, OPENGL and OPENGLES is true
 #get_target_property(QtGui_location Qt5::Gui LOCATION) #dll path
 
-if(Qt5Gui_OPENGL_IMPLEMENTATION STREQUAL GL) # windows always set to GL
+if(Qt5Gui_OPENGL_IMPLEMENTATION STREQUAL GL OR Qt5Gui_OPENGL_IMPLEMENTATION STREQUAL GLESv2) # windows always set to GL
   if(EXISTS ${QT_INSTALL_HEADERS}/QtANGLE)
     set(DYNAMIC_GL 1) # assume Qt5Gui_OPENGL_IMPLEMENTATION is not GL if build with ANGLE only
     if(NOT DEFINED Qt5Gui_EGL_INCLUDE_DIRS)
@@ -345,7 +355,6 @@ if(WIN32 OR WindowsStore OR WindowsPhone)
   if(NOT HAVE_XAUDIO2_H)
     list(APPEND EXTRA_INCLUDE ${QTAV_SOURCE_DIR}/contrib/dxsdk)
   endif()
-  message("Qt5Gui_EGL_INCLUDE_DIRS: ${Qt5Gui_EGL_INCLUDE_DIRS}")
   list(APPEND HEADERS
     output/audio/xaudio2_compat.h
     codec/video/VideoDecoderD3D.h
@@ -418,6 +427,15 @@ if(WIN32 OR WindowsStore OR WindowsPhone)
       -DQTAV_HAVE_DSOUND=1
       -DQTAV_HAVE_DXVA=1
     )
+  endif()
+endif()
+if(ANDROID)
+  if (OPENGL)
+    # GLESv2
+    find_path(GLES2_INCLUDE_DIR GLES2/gl2.h
+        HINTS ${ANDROID_NDK})
+    find_library(GLES2_LIBRARY libGLESv2.so
+        HINTS ${GLES2_INCLUDE_DIR}/../lib)
   endif()
 endif()
 check_library_exists(portaudio Pa_Initialize "" HAVE_PORTAUDIO)
@@ -505,11 +523,28 @@ target_link_libraries(${MODULE}
 )
 
 foreach(PKG_CONFIG_MODULE ${PKG_CONFIG_MODULES})
-    target_link_libraries(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_LINK_LIBRARIES})
-    target_include_directories(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_INCLUDE_DIRS})
+    # DEBUG
+    #message(Linking --${${PKG_CONFIG_MODULE}_LDFLAGS})
+    #target_link_libraries(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_LINK_LIBRARIES} PUBLIC ${GLES2_LIBRARY})
+    target_link_libraries(${MODULE} PRIVATE PkgConfig::${PKG_CONFIG_MODULE} PUBLIC ${GLES2_LIBRARY})
+    target_include_directories(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_INCLUDE_DIRS} PUBLIC ${GLES2_INCLUDE_DIR})
     target_compile_options(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_CFLAGS_OTHER})
     target_compile_definitions(${MODULE} PRIVATE -DQTAV_HAVE_${PKG_CONFIG_MODULE}=1)
+    target_link_options(${MODULE} PRIVATE ${${PKG_CONFIG_MODULE}_LDFLAGS})
 endforeach()
+
+#message("--------------HAVE_EGL DYNAMIC_GL OPENGL OPENGLES HAVE_OPENGL ${HAVE_EGL} ${DYNAMIC_GL} ${OPENGL} ${OPENGLES} ${HAVE_OPENGL}")
+if(ANDROID)
+  if (OPENGL)
+    # GLESv2
+    find_path(GLES2_INCLUDE_DIR GLES2/gl2.h
+        HINTS ${ANDROID_NDK})
+    find_library(GLES2_LIBRARY libGLESv2.so
+        HINTS ${GLES2_INCLUDE_DIR}/../lib)
+    target_include_directories(${MODULE} PRIVATE ${GLES2_INCLUDE_DIR})
+    target_link_libraries(${MODULE} PRIVATE ${GLES2_LIBRARY})
+  endif()
+endif()
 
 set_target_properties(${MODULE} PROPERTIES
   MACOSX_RPATH ON

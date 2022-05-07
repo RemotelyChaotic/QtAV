@@ -20,10 +20,9 @@ endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden) #use with -fdata-sections -ffunction-sections to reduce target size
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
-
-option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_PLAYERS "Build players" ON)
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_PLAYERS "Build players" OFF)
+option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_QT5OPENGL "Build with Qt5 OpenGL module" ON)
 option(BUILD_QML "Build QML interfaces" ON)
 
