@@ -1,0 +1,14 @@
+prefix=${pcfiledir}/../../..
+exec_prefix=${prefix}
+libdir=${pcfiledir}/..
+includedir=${prefix}/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 56.70.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil 
+Libs.private: -pthread -lva-drm -lva -lva-x11 -lva -lvdpau -lX11 -lm -ldrm -L/home/runner/work/avbuild/avbuild/tools/dep/linux/amd64/lib/pkgconfig/../../lib -lmfx -ldl -lc++ -lva -latomic -lXv -lX11 -lXext -ldl
+Cflags: -I${includedir}

@@ -1,0 +1,5 @@
+create /home/runner/work/avbuild/avbuild/sdk-linux-armhf-clang/lib/libavformat_full.a
+addlib /home/runner/work/avbuild/avbuild/sdk-linux-armhf-clang/lib/libavformat.a
+addlib /home/runner/work/avbuild/avbuild/build_sdk-linux-armhf-clang/libwolfssl.a
+save
+end
