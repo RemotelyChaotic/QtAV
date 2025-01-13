@@ -1,0 +1,2 @@
+configure --extra-version=QtAV --disable-doc --disable-debug --enable-shared --enable-runtime-cpudetect --enable-libmfx --enable-avresample --disable-postproc --toolchain=hardened --enable-pic --extra-cflags="-Wa,--noexecstack -fdata-sections -ffunction-sections -fstack-protector-strong" --extra-ldflags="-Wl,--gc-sections"
+569a9d3
